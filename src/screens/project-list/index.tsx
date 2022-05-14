@@ -1,49 +1,52 @@
 import { List } from "./list";
 import { SearchPanel } from "./search-panel";
-import { useEffect, useState } from "react";
-import { cleanObject, useDebounce, useMount } from "../../utils";
-import * as qs from "qs";
+import { useDebounce, useDocumentTitle } from "../../utils";
+import { useProjects } from "../../utils/project";
+import { useUsers } from "../../utils/user";
+import styled from "@emotion/styled";
+import { useProjectModal, useProjectsSearchParams } from "./util";
+import { ButtonNoPadding, ErrorBox, Row } from "../../components/lib";
 
 export const ProjectListScreen = () => {
-  const apiUrl = process.env.REACT_APP_API_URL;
+  // 设置页面标题
+  useDocumentTitle("项目列表", false);
 
-  const [param, setParam] = useState({
-    name: "",
-    personId: "",
-  });
-  const [list, setList] = useState([]);
-  const [users, setUsers] = useState([]);
-
+  const [param, setParam] = useProjectsSearchParams();
+  // 防抖
   const debounceParam = useDebounce(param, 500);
-
-  // 获取项目列表接口的代码
-  useEffect(() => {
-    fetch(
-      `${apiUrl}/projects?${qs.stringify(cleanObject(debounceParam))}`
-    ).then(async (response) => {
-      if (response.ok) {
-        setList(await response.json());
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounceParam]);
-
-  useMount(() => {
-    fetch(`${apiUrl}/users`).then(async (response) => {
-      if (response.ok) {
-        setUsers(await response.json());
-      }
-    });
-  });
+  // 获取项目
+  const { isLoading, error, data: list } = useProjects(debounceParam);
+  // 获取用户
+  const { data: users } = useUsers();
+  // 控制打开关闭项目状态
+  const { open } = useProjectModal();
 
   return (
-    <div>
+    <Container>
+      <Row between={true}>
+        <h1>项目列表</h1>
+        <ButtonNoPadding type={"link"} onClick={open}>
+          创建项目
+        </ButtonNoPadding>
+      </Row>
       <SearchPanel
         param={param}
         setParam={setParam}
-        users={users}
+        users={users || []}
       ></SearchPanel>
-      <List list={list} users={users}></List>
-    </div>
+      <ErrorBox error={error} />
+      <List
+        loading={isLoading}
+        dataSource={list || []}
+        users={users || []}
+      ></List>
+    </Container>
   );
 };
+
+ProjectListScreen.whyDidYouRender = false;
+
+const Container = styled.div`
+  flex: 1;
+  padding: 3.2rem;
+`;

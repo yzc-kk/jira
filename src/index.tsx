@@ -1,14 +1,18 @@
+import "./wdyr";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import "antd/dist/antd.less";
 import App from "./App";
-import { loadDevTools } from "jira-dev-tool";
+import { loadServer, DevTools } from "jira-dev-tool";
+// 务必在jira-dev-tool后面引入
 import { AppProviders } from "./context";
 
 const container = document.getElementById("root");
 const root = createRoot(container!);
-loadDevTools(() =>
+loadServer(() =>
   root.render(
     <AppProviders>
+      <DevTools />
       <App />
     </AppProviders>
   )
